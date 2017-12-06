@@ -69,8 +69,11 @@ void find(char * lpPath)
 
                 WIN32_FIND_DATA *value = getFromHashMap(hashMap, keyFileName);
                 if(value == NULL){
-                    putIntoHashMap(hashMap, keyFileName, &FindFileData);
-                    fprintf(stdout, "put %s size %u\n", FindFileData.cFileName, FindFileData.nFileSizeLow);
+                    WIN32_FIND_DATA currentFindFileData;
+                    currentFindFileData.nFileSizeLow = FindFileData.nFileSizeLow;
+                    strcpy(currentFindFileData.cFileName, FindFileData.cFileName);
+                    putIntoHashMap(hashMap, keyFileName, &currentFindFileData);
+                    fprintf(stdout, "put %s size %u\n", currentFindFileData.cFileName, currentFindFileData.nFileSizeLow);
                 } else {
 
                     WIN32_FIND_DATA more;
@@ -93,21 +96,27 @@ void find(char * lpPath)
                     fprintf(stdout, "del %s size %u\n", less.cFileName, less.nFileSizeLow);
 
                     //÷ÿ√¸√˚
-                    char * suffix = strchr(more.cFileName, '.');
-                    char * renameb = malloc(strlen(lpPath) + 1 + strlen(more.cFileName));
-                    strcpy(renameb, lpPath);
-                    strcat(renameb, "/");
-                    strcat(renameb, more.cFileName);
+//                    char * suffix = strchr(more.cFileName, '.');
+//                    char * renameb = malloc(strlen(lpPath) + 1 + strlen(more.cFileName));
+//                    strcpy(renameb, lpPath);
+//                    strcat(renameb, "/");
+//                    strcat(renameb, more.cFileName);
+//
+//                    char * rename2 = malloc(strlen(lpPath) + 1 + strlen(keyFileName) + strlen(suffix));
+//                    strcpy(rename2, lpPath);
+//                    strcat(rename2, "/");
+//                    strcat(rename2, keyFileName);
+//                    strcat(rename2, suffix);
+//
+//                    MoveFile(renameb, rename2);
+//
+//                    fprintf(stdout, "ren %s size %u\n", more.cFileName, more.nFileSizeLow);
 
-                    char * rename2 = malloc(strlen(lpPath) + 1 + strlen(keyFileName) + strlen(suffix));
-                    strcpy(rename2, lpPath);
-                    strcat(rename2, "/");
-                    strcat(rename2, keyFileName);
-                    strcat(rename2, suffix);
-
-                    MoveFile(renameb, rename2);
-
-                    fprintf(stdout, "ren %s size %u\n", more.cFileName, more.nFileSizeLow);
+                    WIN32_FIND_DATA currentFindFileData;
+                    currentFindFileData.nFileSizeLow = more.nFileSizeLow;
+                    strcpy(currentFindFileData.cFileName, more.cFileName);
+                    putIntoHashMap(hashMap, keyFileName, &currentFindFileData);
+                    fprintf(stdout, "put %s size %u\n", currentFindFileData.cFileName, currentFindFileData.nFileSizeLow);
                 }
 
 
