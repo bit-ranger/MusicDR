@@ -90,7 +90,7 @@ void find(char * lpPath)
                     char * name2Delete = malloc(strlen(lpPath) + strlen(less.cFileName));
                     strcpy(name2Delete, lpPath);
                     strcat(name2Delete, "/");
-                    strcat(name2Delete, (*value).cFileName);
+                    strcat(name2Delete, less.cFileName);
                     DeleteFile(name2Delete);
 
                     fprintf(stdout, "del %s size %u\n", less.cFileName, less.nFileSizeLow);
