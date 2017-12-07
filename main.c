@@ -5,7 +5,8 @@
 
 
 
-static int hash(char *key){
+static int hash(void *keyVoid){
+    char * key = keyVoid;
     int h = 5381;
     for (int i = 0; ; i++) {
         if(*(key + i) == '\0'){
@@ -18,7 +19,10 @@ static int hash(char *key){
     return h;
 }
 
-static bool equal(char *key1, char *key2) {
+static bool equal(void *key1Void, void *key2Void) {
+    char * key1 = key1Void;
+    char * key2 = key2Void;
+
     return strcmp(key1, key2) == 0;
 }
 
@@ -62,8 +66,6 @@ void find(char * lpPath)
             else
             {
 
-                fprintf(stdout, "%s\n", FindFileData.cFileName);
-
 				//获取核心名称
                 char *keyFileName = cut(cut(FindFileData.cFileName, "."), " (");
 
@@ -71,12 +73,13 @@ void find(char * lpPath)
 
                 if(value == NULL){
 					//复制到新的结构体，放进map
-                    WIN32_FIND_DATA currentFindFileData;
-                    currentFindFileData.nFileSizeLow = FindFileData.nFileSizeLow;
-                    strcpy(currentFindFileData.cFileName, FindFileData.cFileName);
-                    putIntoHashMap(hashMap, keyFileName, &currentFindFileData);
+                    WIN32_FIND_DATA *currentFindFileData = calloc(1, sizeof(WIN32_FIND_DATA));
+                    currentFindFileData->nFileSizeLow = FindFileData.nFileSizeLow;
+                    //currentFindFileData->cFileName = calloc(strlen(FindFileData.cFileName), sizeof(char));
+                    strcpy(currentFindFileData->cFileName, FindFileData.cFileName);
+                    putIntoHashMap(hashMap, keyFileName, currentFindFileData);
 
-                    fprintf(stdout, "put %s size %u\n", currentFindFileData.cFileName, currentFindFileData.nFileSizeLow);
+                    fprintf(stdout, "put %s size %u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
                 } else {
 
                     WIN32_FIND_DATA more;
@@ -90,7 +93,7 @@ void find(char * lpPath)
                         more = FindFileData;
                     }
 
-                    char * name2Delete = malloc(strlen(lpPath) + strlen(less.cFileName));
+                    char * name2Delete = calloc(strlen(lpPath) + strlen(less.cFileName), sizeof(char));
                     strcpy(name2Delete, lpPath);
                     strcat(name2Delete, "/");
                     strcat(name2Delete, less.cFileName);
@@ -99,12 +102,15 @@ void find(char * lpPath)
                     fprintf(stdout, "del %s size %u\n", less.cFileName, less.nFileSizeLow);
 
 					//大的复制到新的结构体，放进map
-                    WIN32_FIND_DATA currentFindFileData;
-                    currentFindFileData.nFileSizeLow = more.nFileSizeLow;
-                    strcpy(currentFindFileData.cFileName, more.cFileName);
-                    putIntoHashMap(hashMap, keyFileName, &currentFindFileData);
+                    WIN32_FIND_DATA *currentFindFileData = calloc(1, sizeof(WIN32_FIND_DATA));
+                    currentFindFileData->nFileSizeLow = more.nFileSizeLow;
+                    strcpy(currentFindFileData->cFileName, more.cFileName);
+                    putIntoHashMap(hashMap, keyFileName, currentFindFileData);
 
-                    fprintf(stdout, "put %s size %u\n", currentFindFileData.cFileName, currentFindFileData.nFileSizeLow);
+                    fprintf(stdout, "put %s size %u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
+
+                    //free(name2Delete);
+                    free(value);
                 }
 
                 fflush(stdout);
@@ -119,22 +125,23 @@ void find(char * lpPath)
 		//重命名
 
 		unsigned int size = sizeOfHashMap(hashMap);
-		HashMapKVPair p = listPairsOfHashMap(hashMap);
+		KVPair *p = listPairsOfHashMap(hashMap);
 
-		for (unsigned int i = 0; i < size; i++){
+		for (int i = 0; i < size; i++){
 			WIN32_FIND_DATA more;
-			more = (WIN32_FIND_DATA*)*(*(p + i).value);
+            WIN32_FIND_DATA * moreP = (p + i)->value;
+            more = *moreP;
 
 			char * suffix = strchr(more.cFileName, '.');
-			char * renameb = malloc(strlen(lpPath) + 1 + strlen(more.cFileName));
+			char * renameb = calloc(strlen(lpPath) + 1 + strlen(more.cFileName), sizeof(char));
 			strcpy(renameb, lpPath);
 			strcat(renameb, "/");
 			strcat(renameb, more.cFileName);
 
 			//获取核心名称
-			char *keyFileName = cut(cut(FindFileData.cFileName, "."), " (");
+			char *keyFileName = cut(cut(more.cFileName, "."), " (");
 
-			char * rename2 = malloc(strlen(lpPath) + 1 + strlen(keyFileName) + strlen(suffix));
+			char * rename2 = calloc(strlen(lpPath) + 1 + strlen(keyFileName) + strlen(suffix), sizeof(char));
 			strcpy(rename2, lpPath);
 			strcat(rename2, "/");
 			strcat(rename2, keyFileName);
@@ -142,12 +149,17 @@ void find(char * lpPath)
 
 			MoveFile(renameb, rename2);
 
-			fprintf(stdout, "ren %s size %u\n", more.cFileName, more.nFileSizeLow);
+			fprintf(stdout, "rename %s >>> %s\n", renameb, rename2);
+//free会异常，原因待排查
+//            free(renameb);
+//            free(rename2);
+            free(moreP);
 		}
-
+        fflush(stdout);
 			
 
-
+        free(p);
+        destroyHashMap(hashMap);
         FindClose(hFind);
     }
 
@@ -157,5 +169,5 @@ void main()
 {
     char filepath[MAX_PATH]="/var/MusicDR";
     find(filepath);
-    system("PAUSE");
+    //system("PAUSE");
 }

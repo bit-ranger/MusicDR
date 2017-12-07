@@ -12,7 +12,7 @@
 typedef void* HashMap;
 
 /*数据对*/
-typedef struct KVPair2{
+typedef struct KVPair{
 	void *key;
 	void *value;
 }KVPair;

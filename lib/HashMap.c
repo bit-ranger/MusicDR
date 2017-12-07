@@ -294,12 +294,6 @@ unsigned int sizeOfHashMap(HashMap hashMap){
     return realTarget(hashMap) -> size;
 }
 
-/*数据对*/
-typedef struct KVPair {
-	void *key;
-	void *value;
-}KVPair;
-
 KVPair * listPairsOfHashMap(HashMap hashMap){
 	unsigned int size = sizeOfHashMap(hashMap);
 	KVPair *p = calloc(size, sizeof(KVPair));
@@ -312,9 +306,10 @@ KVPair * listPairsOfHashMap(HashMap hashMap){
 			if (entry == NULL) {
 				break;
 			}
-			*(p + i).key = entry->key;
-			*(p + i).value = entry->value;
+            (p + indexOfP)->key = entry->key;
+            (p + indexOfP)->value = entry->value;
 			entry = entry->next;
+            indexOfP++;
 		}
 	}
 	return p;
