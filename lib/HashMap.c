@@ -19,7 +19,7 @@ typedef struct NestedEntryStruct{
      * 下一个结点
      */
     struct NestedEntryStruct *next;
-    char *key;
+    void *key;
     void *value;
 
 }EntryStruct;
@@ -294,4 +294,28 @@ unsigned int sizeOfHashMap(HashMap hashMap){
     return realTarget(hashMap) -> size;
 }
 
+/*数据对*/
+typedef struct KVPair {
+	void *key;
+	void *value;
+}KVPair;
 
+KVPair * listPairsOfHashMap(HashMap hashMap){
+	unsigned int size = sizeOfHashMap(hashMap);
+	KVPair *p = calloc(size, sizeof(KVPair));
+	int indexOfP = 0;
+
+	_HashMap _hashMap = realTarget(hashMap);
+	for (int i = 0; i<_hashMap->tableSize; i++) {
+		Entry entry = *(_hashMap->tableHead + i);
+		for (;;) {
+			if (entry == NULL) {
+				break;
+			}
+			*(p + i).key = entry->key;
+			*(p + i).value = entry->value;
+			entry = entry->next;
+		}
+	}
+	return p;
+}

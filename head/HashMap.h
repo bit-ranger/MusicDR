@@ -11,6 +11,12 @@
  */
 typedef void* HashMap;
 
+/*数据对*/
+typedef struct KVPair2{
+	void *key;
+	void *value;
+}KVPair;
+
 /**
  * 创建HashMap
  * @param capacity 初始化容量
@@ -19,8 +25,8 @@ typedef void* HashMap;
  * @return 数据对象
  */
 HashMap createHashMap(unsigned int capacity,
-                      int (* hash)(void * key),
-                      bool (* equal)(void * var1, void * var2));
+	int(*hash)(void * key),
+	bool(*equal)(void * var1, void * var2));
 
 /**
  * 将元数据放入HashMap
@@ -56,3 +62,10 @@ void destroyHashMap(HashMap hashMap);
  * 已存放元素个数
  */
 unsigned int sizeOfHashMap(HashMap hashMap);
+
+
+/**
+ * 获取Pair列表
+ */
+KVPair * listPairsOfHashMap(HashMap hashMap);
+

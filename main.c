@@ -36,17 +36,18 @@ char* cut(char *str, char *cut){
     }
 }
 
+
 void find(char * lpPath)
 {
     char szFind[MAX_PATH], szFile[MAX_PATH];
     WIN32_FIND_DATA FindFileData;
     strcpy(szFind, lpPath);
-    strcat(szFind, "\\*");
+    strcat(szFind, "/*");
     HANDLE hFind= FindFirstFile(szFind, &FindFileData);
     if(INVALID_HANDLE_VALUE == hFind){
         return;
     } else {
-        HashMap  hashMap = createHashMap(64, &hash, equal);
+        HashMap  hashMap = createHashMap(64, &hash, &equal);
         while(TRUE) {
             if(FindFileData.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY)
             {
@@ -62,23 +63,25 @@ void find(char * lpPath)
             {
 
                 fprintf(stdout, "%s\n", FindFileData.cFileName);
-//                fprintf(stdout, "%u\n", FindFileData.nFileSizeLow);
 
+				//Ëé∑ÂèñÊ†∏ÂøÉÂêçÁß∞
                 char *keyFileName = cut(cut(FindFileData.cFileName, "."), " (");
-//                fprintf(stdout, "%s\n", keyFileName);
 
                 WIN32_FIND_DATA *value = getFromHashMap(hashMap, keyFileName);
+
                 if(value == NULL){
+					//Â§çÂà∂Âà∞Êñ∞ÁöÑÁªìÊûÑ‰ΩìÔºåÊîæËøõmap
                     WIN32_FIND_DATA currentFindFileData;
                     currentFindFileData.nFileSizeLow = FindFileData.nFileSizeLow;
                     strcpy(currentFindFileData.cFileName, FindFileData.cFileName);
                     putIntoHashMap(hashMap, keyFileName, &currentFindFileData);
+
                     fprintf(stdout, "put %s size %u\n", currentFindFileData.cFileName, currentFindFileData.nFileSizeLow);
                 } else {
 
                     WIN32_FIND_DATA more;
                     WIN32_FIND_DATA less;
-                    //…æ≥˝–°µƒ
+                    //Âà†Èô§Â∞èÁöÑ
                     if((*value).nFileSizeLow > FindFileData.nFileSizeLow){
                         more = *value;
                         less = FindFileData;
@@ -95,43 +98,55 @@ void find(char * lpPath)
 
                     fprintf(stdout, "del %s size %u\n", less.cFileName, less.nFileSizeLow);
 
-                    //÷ÿ√¸√˚
-//                    char * suffix = strchr(more.cFileName, '.');
-//                    char * renameb = malloc(strlen(lpPath) + 1 + strlen(more.cFileName));
-//                    strcpy(renameb, lpPath);
-//                    strcat(renameb, "/");
-//                    strcat(renameb, more.cFileName);
-//
-//                    char * rename2 = malloc(strlen(lpPath) + 1 + strlen(keyFileName) + strlen(suffix));
-//                    strcpy(rename2, lpPath);
-//                    strcat(rename2, "/");
-//                    strcat(rename2, keyFileName);
-//                    strcat(rename2, suffix);
-//
-//                    MoveFile(renameb, rename2);
-//
-//                    fprintf(stdout, "ren %s size %u\n", more.cFileName, more.nFileSizeLow);
-
+					//Â§ßÁöÑÂ§çÂà∂Âà∞Êñ∞ÁöÑÁªìÊûÑ‰ΩìÔºåÊîæËøõmap
                     WIN32_FIND_DATA currentFindFileData;
                     currentFindFileData.nFileSizeLow = more.nFileSizeLow;
                     strcpy(currentFindFileData.cFileName, more.cFileName);
                     putIntoHashMap(hashMap, keyFileName, &currentFindFileData);
+
                     fprintf(stdout, "put %s size %u\n", currentFindFileData.cFileName, currentFindFileData.nFileSizeLow);
                 }
-
-
-                //printf("%s\n",FindFileData.dwFileAttributes);
-                //printf("%d\n",FindFileData.ftCreationTime.dwHighDateTime);
-                //printf("%d\n",FindFileData.ftCreationTime.dwLowDateTime);
 
                 fflush(stdout);
             }
 
-            //todo ¥À¥¶ √ø¥ŒªÒ»°µƒ∏˙¥”hashmap÷–∑µªÿµƒ «Õ¨“ª∏ˆµÿ÷∑
+           
             if(!FindNextFile(hFind,&FindFileData)){
                 break;
             }
         }
+		                    
+		//ÈáçÂëΩÂêç
+
+		unsigned int size = sizeOfHashMap(hashMap);
+		HashMapKVPair p = listPairsOfHashMap(hashMap);
+
+		for (unsigned int i = 0; i < size; i++){
+			WIN32_FIND_DATA more;
+			more = (WIN32_FIND_DATA*)*(*(p + i).value);
+
+			char * suffix = strchr(more.cFileName, '.');
+			char * renameb = malloc(strlen(lpPath) + 1 + strlen(more.cFileName));
+			strcpy(renameb, lpPath);
+			strcat(renameb, "/");
+			strcat(renameb, more.cFileName);
+
+			//Ëé∑ÂèñÊ†∏ÂøÉÂêçÁß∞
+			char *keyFileName = cut(cut(FindFileData.cFileName, "."), " (");
+
+			char * rename2 = malloc(strlen(lpPath) + 1 + strlen(keyFileName) + strlen(suffix));
+			strcpy(rename2, lpPath);
+			strcat(rename2, "/");
+			strcat(rename2, keyFileName);
+			strcat(rename2, suffix);
+
+			MoveFile(renameb, rename2);
+
+			fprintf(stdout, "ren %s size %u\n", more.cFileName, more.nFileSizeLow);
+		}
+
+			
+
 
         FindClose(hFind);
     }
@@ -142,9 +157,5 @@ void main()
 {
     char filepath[MAX_PATH]="/var/MusicDR";
     find(filepath);
-
-//    char *cutStr = cut("jljlkl(1)", "(1)");
-//    printf("%s\n", cutStr);
-//    free(cutStr);
     system("PAUSE");
 }
