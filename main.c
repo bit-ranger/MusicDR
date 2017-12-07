@@ -32,8 +32,8 @@ char* cut(char *str, char *cut){
     if(add == NULL){
         return str;
     } else {
-        unsigned int i = add - str;
-        char * new_str = malloc(sizeof(char) * (i + 1));
+        unsigned long i = add - str;
+        char * new_str = calloc(i + 1, sizeof(char));
         strncpy(new_str, str, i);
         *(new_str + i) = '\0';
         return new_str;
@@ -133,6 +133,12 @@ void find(char * lpPath)
             more = *moreP;
 
 			char * suffix = strchr(more.cFileName, '.');
+            int    suffixLen;
+            if(suffix == NULL){
+                suffixLen = 0;
+            } else {
+                suffixLen = strlen(suffix);
+            }
 			char * renameb = calloc(strlen(lpPath) + 1 + strlen(more.cFileName), sizeof(char));
 			strcpy(renameb, lpPath);
 			strcat(renameb, "/");
@@ -141,11 +147,18 @@ void find(char * lpPath)
 			//获取核心名称
 			char *keyFileName = cut(cut(more.cFileName, "."), " (");
 
-			char * rename2 = calloc(strlen(lpPath) + 1 + strlen(keyFileName) + strlen(suffix), sizeof(char));
+			char * rename2 = calloc(strlen(lpPath) + 1 + strlen(keyFileName) + suffixLen, sizeof(char));
 			strcpy(rename2, lpPath);
 			strcat(rename2, "/");
 			strcat(rename2, keyFileName);
-			strcat(rename2, suffix);
+            if(suffixLen > 0){
+                strcat(rename2, suffix);
+            }
+
+
+            if(equal(renameb, rename2)){
+                continue;
+            }
 
 			MoveFile(renameb, rename2);
 
@@ -167,7 +180,10 @@ void find(char * lpPath)
 }
 void main()
 {
-    char filepath[MAX_PATH]="/var/MusicDR";
+    fprintf(stdout, "please input the dir\n");
+    fflush(stdout);
+    char filepath[MAX_PATH];
+    scanf("%s", filepath);
     find(filepath);
-    //system("PAUSE");
+    system("PAUSE");
 }
