@@ -51,7 +51,7 @@ void find(char * lpPath)
     if(INVALID_HANDLE_VALUE == hFind){
         return;
     } else {
-        HashMap  hashMap = createHashMap(64, &hash, &equal);
+        HashMap  hashMap = CreateHashMap(64, &hash, &equal);
         while(TRUE) {
             if(FindFileData.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY)
             {
@@ -69,14 +69,14 @@ void find(char * lpPath)
 				//获取核心名称
                 char *keyFileName = cut(cut(FindFileData.cFileName, "."), " (");
 
-                WIN32_FIND_DATA *value = getFromHashMap(hashMap, keyFileName);
+                WIN32_FIND_DATA *value = GetHashMap(hashMap, keyFileName);
 
                 if(value == NULL){
 					//复制到新的结构体，放进map
                     WIN32_FIND_DATA *currentFindFileData = calloc(1, sizeof(WIN32_FIND_DATA));
                     currentFindFileData->nFileSizeLow = FindFileData.nFileSizeLow;
                     strcpy(currentFindFileData->cFileName, FindFileData.cFileName);
-                    putIntoHashMap(hashMap, keyFileName, currentFindFileData);
+                    PutHashMap(hashMap, keyFileName, currentFindFileData);
 
                     fprintf(stdout, "put %s size %u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
                 } else {
@@ -104,7 +104,7 @@ void find(char * lpPath)
                     WIN32_FIND_DATA *currentFindFileData = calloc(1, sizeof(WIN32_FIND_DATA));
                     currentFindFileData->nFileSizeLow = more.nFileSizeLow;
                     strcpy(currentFindFileData->cFileName, more.cFileName);
-                    putIntoHashMap(hashMap, keyFileName, currentFindFileData);
+                    PutHashMap(hashMap, keyFileName, currentFindFileData);
 
                     fprintf(stdout, "put %s size %u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
 
@@ -123,8 +123,8 @@ void find(char * lpPath)
 		                    
 		//重命名
 
-		unsigned int size = sizeOfHashMap(hashMap);
-		KVPair *p = listPairsOfHashMap(hashMap);
+		unsigned int size = SizeHashMap(hashMap);
+        KvPairHashMap *p = PairListHashMap(hashMap);
 
 		for (int i = 0; i < size; i++){
 			WIN32_FIND_DATA more;
@@ -171,7 +171,7 @@ void find(char * lpPath)
 			
 
         free(p);
-        destroyHashMap(hashMap);
+        DestroyHashMap(hashMap);
         FindClose(hFind);
     }
 
