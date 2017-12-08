@@ -7,7 +7,7 @@ include_directories(head)
 
 set (EXTRA_LIBS ${EXTRA_LIBS})
 
-add_executable(MusicDR main.c)
+add_executable(MusicDR head main.c)
 
 #@see https://github.com/WakelessDragon/CL_Common
 target_link_libraries (MusicDR  ${EXTRA_LIBS} /Doc/MyRepo/CL-Common/cmake-build-debug/libCL_Common.a)
