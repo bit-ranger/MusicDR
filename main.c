@@ -56,7 +56,7 @@ void find(char * lpPath)
         while(TRUE) {
             if(FindFileData.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY)
             {
-                if(FindFileData.cFileName[0]!='.')
+                if(FindFileData.cFileName[0] != '.')
                 {
                     strcpy(szFile,lpPath);
                     strcat(szFile,"");
@@ -66,6 +66,12 @@ void find(char * lpPath)
             }
             else
             {
+
+                if(FindFileData.cFileName[0] == '.'){
+                    if(!FindNextFile(hFind,&FindFileData)){
+                        break;
+                    }
+                }
 
 				//获取核心名称
                 char *keyFileName = cut(cut(FindFileData.cFileName, "."), " (");
@@ -141,7 +147,10 @@ void find(char * lpPath)
             } else {
                 suffixLen = strlen(suffix);
             }
-			char * renameb = calloc(strlen(lpPath) + 1 + strlen(more.cFileName), sizeof(char));
+
+            //fprintf(stdout, "rename suffix %s\n", suffix);
+
+			char * renameb = calloc(MAX_PATH, sizeof(char));
 			strcpy(renameb, lpPath);
 			strcat(renameb, "/");
 			strcat(renameb, more.cFileName);
@@ -151,10 +160,10 @@ void find(char * lpPath)
 			//获取核心名称
 			char *keyFileName = cut(cut(more.cFileName, "."), " (");
 
-            fprintf(stdout, "rename core %s\n", keyFileName);
 
-			char * rename2 = calloc(strlen(lpPath) + 1 + strlen(keyFileName) + suffixLen, sizeof(char));
-			strcpy(rename2, lpPath);
+			char * rename2 = calloc(MAX_PATH, sizeof(char));
+
+            strcpy(rename2, lpPath);
 			strcat(rename2, "/");
 			strcat(rename2, keyFileName);
             if(suffixLen > 0){
