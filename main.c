@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <errno.h>
 #include <windows.h>
 #include "HashMap.h"
 
-
+extern int errno;
 
 
 static int hash(void *keyVoid){
@@ -131,6 +132,8 @@ void find(char * lpPath)
             WIN32_FIND_DATA * moreP = (p + i)->value;
             more = *moreP;
 
+            fprintf(stdout, "rename before %s\n", more.cFileName);
+
 			char * suffix = strchr(more.cFileName, '.');
             int    suffixLen;
             if(suffix == NULL){
@@ -143,8 +146,12 @@ void find(char * lpPath)
 			strcat(renameb, "/");
 			strcat(renameb, more.cFileName);
 
+            fprintf(stdout, "rename from %s\n", renameb);
+
 			//获取核心名称
 			char *keyFileName = cut(cut(more.cFileName, "."), " (");
+
+            fprintf(stdout, "rename core %s\n", keyFileName);
 
 			char * rename2 = calloc(strlen(lpPath) + 1 + strlen(keyFileName) + suffixLen, sizeof(char));
 			strcpy(rename2, lpPath);
@@ -154,14 +161,16 @@ void find(char * lpPath)
                 strcat(rename2, suffix);
             }
 
+            fprintf(stdout, "rename to %s\n", rename2);
 
             if(equal(renameb, rename2)){
+                fprintf(stdout, "rename ignore %s\n", renameb);
                 continue;
             }
 
 			MoveFile(renameb, rename2);
 
-			fprintf(stdout, "rename %s >>> %s\n", renameb, rename2);
+			fprintf(stdout, "rename success %s\n", rename2);
 //free会异常，原因待排查
 //            free(renameb);
 //            free(rename2);
