@@ -1,10 +1,6 @@
 #include <stdio.h>
 #include <windows.h>
 #include <HashMap.h>
-#include <conio.h>
-
-extern int errno;
-
 
 /**
  * hash函数
@@ -248,7 +244,7 @@ int main()
 
     fprintf(stdout, "按任意键退出\n");
     fflush(stdout);
-    getch();//等待终端输入任意字符
+    getchar();//等待终端输入任意字符
 
     return 0;//退出程序。
 }
