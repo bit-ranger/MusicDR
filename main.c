@@ -99,6 +99,7 @@ void find(char *dir, char *pattern) {
                     PutHashMap(hashMap, KeyFileName, currentFindFileData);
 
                     fprintf(stdout, "find %s,%u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
+                    fflush(stdout);
                 } else {
 
                     WIN32_FIND_DATA more;
@@ -113,6 +114,7 @@ void find(char *dir, char *pattern) {
                     }
 
                     fprintf(stdout, "compare %s,%u greater than %s,%u\n", more.cFileName, more.nFileSizeLow, less.cFileName, less.nFileSizeLow);
+                    fflush(stdout);
 
                     char *name2Delete = calloc(MAX_PATH, sizeof(char));
                     strcpy(name2Delete, dir);
@@ -121,6 +123,7 @@ void find(char *dir, char *pattern) {
                     DeleteFile(name2Delete);
 
                     fprintf(stdout, "delete %s,%u\n", less.cFileName, less.nFileSizeLow);
+                    fflush(stdout);
                     free(name2Delete);
 
 					//大的复制到新的结构体，放进map
@@ -130,7 +133,7 @@ void find(char *dir, char *pattern) {
                     PutHashMap(hashMap, KeyFileName, currentFindFileData);
 
                     fprintf(stdout, "keep %s,%u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
-
+                    fflush(stdout);
                     free(value);
                 }
 
@@ -154,6 +157,7 @@ void find(char *dir, char *pattern) {
             more = *moreP;
 
             fprintf(stdout, "rename before %s\n", more.cFileName);
+            fflush(stdout);
 
 			char * suffix = strchr(more.cFileName, '.');
             int    suffixLen;
@@ -171,6 +175,7 @@ void find(char *dir, char *pattern) {
 			strcat(renameFr, more.cFileName);
 
             fprintf(stdout, "rename from %s\n", renameFr);
+            fflush(stdout);
 
             //获取核心名称
             char *KeyFileName0 = calloc(MAX_PATH, sizeof(char));;
@@ -189,9 +194,11 @@ void find(char *dir, char *pattern) {
             }
 
             fprintf(stdout, "rename to   %s\n", renameTo);
+            fflush(stdout);
 
             if(equal(renameFr, renameTo)){
                 fprintf(stdout, "rename ignore\n");
+                fflush(stdout);
             } else {
                 char fr[MAX_PATH];
                 char to[MAX_PATH];
@@ -199,15 +206,14 @@ void find(char *dir, char *pattern) {
                 strcpy(to, renameTo);
                 MoveFile(fr, to);
                 fprintf(stdout, "rename success\n");
+                fflush(stdout);
             }
 
             free(renameFr);
             free(renameTo);
-            free(p->key);
-            free(p->value);
-            free(moreP);
+            free((p + i)->key);
+            free((p + i)->value);
 		}
-        fflush(stdout);
         DestroyHashMap(hashMap);
         FindClose(hFind);
     }
