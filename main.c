@@ -1,11 +1,15 @@
 #include <stdio.h>
-#include <errno.h>
 #include <windows.h>
 #include "HashMap.h"
 
 extern int errno;
 
 
+/**
+ * hash函数
+ * @param keyVoid
+ * @return
+ */
 static int hash(void *keyVoid){
     char * key = keyVoid;
     int h = 5381;
@@ -28,92 +32,104 @@ static bool equal(void *key1Void, void *key2Void) {
 }
 
 
-char* cut(char *str, char *cut){
+int cut(char *str, char *cut, char * newStr){
     char * add = strstr(str, cut);
     if(add == NULL){
-        return str;
+        return 0;
     } else {
         unsigned long i = add - str;
-        char * new_str = calloc(i + 1, sizeof(char));
-        strncpy(new_str, str, i);
-        *(new_str + i) = '\0';
-        return new_str;
+        strncpy(newStr, str, i);
+        *(newStr + i) = '\0';
+        return 0;
     }
 }
 
 
-void find(char * lpPath)
-{
-    char szFind[MAX_PATH], szFile[MAX_PATH];
-    WIN32_FIND_DATA FindFileData;
-    strcpy(szFind, lpPath);
-    strcat(szFind, "/*");
-    HANDLE hFind= FindFirstFile(szFind, &FindFileData);
+void find(char dir[]) {
+
+    /*搜索路径*/
+    char LookUpPath[MAX_PATH];
+    strcpy(LookUpPath, dir);
+    strcat(LookUpPath, "/*");
+
+    /*找到的文件*/
+    WIN32_FIND_DATA FindData;
+    WIN32_FIND_DATA * pFindData = &FindData;
+
+    HANDLE hFind= FindFirstFile(LookUpPath, pFindData);
+
     if(INVALID_HANDLE_VALUE == hFind){
         return;
     } else {
         HashMap  hashMap = CreateHashMap(64, &hash, &equal);
+
         while(TRUE) {
-            if(FindFileData.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY)
+            if(FindData.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY)
             {
-                if(FindFileData.cFileName[0] != '.')
-                {
-                    strcpy(szFile,lpPath);
-                    strcat(szFile,"");
-                    strcat(szFile,FindFileData.cFileName);
-                    find(szFile);
-                }
+//                if(FindData.cFileName[0] != '.')
+//                {
+//                    strcpy(szFile,dir);
+//                    strcat(szFile,"");
+//                    strcat(szFile,FindData.cFileName);
+//                    find(szFile);
+//                }
             }
             else
             {
 
-                if(FindFileData.cFileName[0] == '.'){
-                    if(!FindNextFile(hFind,&FindFileData)){
+                //start with .
+                if(FindData.cFileName[0] == '.'){
+                    if(!FindNextFile(hFind,&FindData)){
                         break;
                     }
                 }
 
 				//获取核心名称
-                char *keyFileName = cut(cut(FindFileData.cFileName, "."), " (");
+                char KeyFileName0[MAX_PATH];
+                cut(FindData.cFileName, ".", KeyFileName0);
+                char KeyFileName[MAX_PATH];
+                cut(KeyFileName0, "(", KeyFileName);
 
-                WIN32_FIND_DATA *value = GetHashMap(hashMap, keyFileName);
+                WIN32_FIND_DATA *value = GetHashMap(hashMap, KeyFileName);
 
                 if(value == NULL){
 					//复制到新的结构体，放进map
                     WIN32_FIND_DATA *currentFindFileData = calloc(1, sizeof(WIN32_FIND_DATA));
-                    currentFindFileData->nFileSizeLow = FindFileData.nFileSizeLow;
-                    strcpy(currentFindFileData->cFileName, FindFileData.cFileName);
-                    PutHashMap(hashMap, keyFileName, currentFindFileData);
+                    currentFindFileData->nFileSizeLow = FindData.nFileSizeLow;
+                    strcpy(currentFindFileData->cFileName, FindData.cFileName);
+                    PutHashMap(hashMap, KeyFileName, currentFindFileData);
 
-                    fprintf(stdout, "put %s size %u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
+                    fprintf(stdout, "find %s,%u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
                 } else {
 
                     WIN32_FIND_DATA more;
                     WIN32_FIND_DATA less;
                     //删除小的
-                    if((*value).nFileSizeLow > FindFileData.nFileSizeLow){
+                    if((*value).nFileSizeLow > FindData.nFileSizeLow){
                         more = *value;
-                        less = FindFileData;
+                        less = FindData;
                     } else {
                         less = *value;
-                        more = FindFileData;
+                        more = FindData;
                     }
 
-                    char * name2Delete = calloc(strlen(lpPath) + strlen(less.cFileName), sizeof(char));
-                    strcpy(name2Delete, lpPath);
+                    fprintf(stdout, "compare %s,%u greater than %s,%u\n", more.cFileName, more.nFileSizeLow, less.cFileName, less.nFileSizeLow);
+
+                    char name2Delete[MAX_PATH];
+                    strcpy(name2Delete, dir);
                     strcat(name2Delete, "/");
                     strcat(name2Delete, less.cFileName);
                     DeleteFile(name2Delete);
 
-                    fprintf(stdout, "del %s size %u\n", less.cFileName, less.nFileSizeLow);
+                    fprintf(stdout, "delete %s,%u\n", less.cFileName, less.nFileSizeLow);
 
 					//大的复制到新的结构体，放进map
                     WIN32_FIND_DATA *currentFindFileData = calloc(1, sizeof(WIN32_FIND_DATA));
                     currentFindFileData->nFileSizeLow = more.nFileSizeLow;
                     strcpy(currentFindFileData->cFileName, more.cFileName);
-                    PutHashMap(hashMap, keyFileName, currentFindFileData);
+                    PutHashMap(hashMap, KeyFileName, currentFindFileData);
 
-                    fprintf(stdout, "put %s size %u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
+                    fprintf(stdout, "keep %s,%u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
 
                     //free(name2Delete);
                     free(value);
@@ -123,7 +139,7 @@ void find(char * lpPath)
             }
 
            
-            if(!FindNextFile(hFind,&FindFileData)){
+            if(!FindNextFile(hFind,&FindData)){
                 break;
             }
         }
@@ -150,22 +166,25 @@ void find(char * lpPath)
 
             //fprintf(stdout, "rename suffix %s\n", suffix);
 
-			char * renameb = calloc(MAX_PATH, sizeof(char));
-			strcpy(renameb, lpPath);
+			char renameb[MAX_PATH];
+			strcpy(renameb, dir);
 			strcat(renameb, "/");
 			strcat(renameb, more.cFileName);
 
             fprintf(stdout, "rename from %s\n", renameb);
 
-			//获取核心名称
-			char *keyFileName = cut(cut(more.cFileName, "."), " (");
+            //获取核心名称
+            char KeyFileName0[MAX_PATH];
+            cut(FindData.cFileName, ".", KeyFileName0);
+            char KeyFileName[MAX_PATH];
+            cut(KeyFileName0, "(", KeyFileName);
 
 
-			char * rename2 = calloc(MAX_PATH, sizeof(char));
+			char rename2[MAX_PATH];
 
-            strcpy(rename2, lpPath);
+            strcpy(rename2, dir);
 			strcat(rename2, "/");
-			strcat(rename2, keyFileName);
+			strcat(rename2, KeyFileName);
             if(suffixLen > 0){
                 strcat(rename2, suffix);
             }
@@ -180,9 +199,6 @@ void find(char * lpPath)
 			MoveFile(renameb, rename2);
 
 			fprintf(stdout, "rename success %s\n", rename2);
-//free会异常，原因待排查
-//            free(renameb);
-//            free(rename2);
             free(moreP);
 		}
         fflush(stdout);
