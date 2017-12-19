@@ -225,12 +225,12 @@ void find(char *dir, char *pattern) {
 
 int main()
 {
-    fprintf(stdout, "请输入音乐目录\n");
+    fprintf(stdout, "please input the music directory\n");
     fflush(stdout);
     char *filepath = calloc(MAX_PATH, sizeof(char));
     fgets(filepath, MAX_PATH, stdin);
 
-    fprintf(stdout, "请输入音乐名不重复的部分开头\n");
+    fprintf(stdout, "please input the redundant pattern\n");
     fflush(stdout);
     char *pattern = calloc(MAX_PATH, sizeof(char));
     fgets(pattern, MAX_PATH, stdin);
@@ -248,7 +248,7 @@ int main()
     free(filepath);
     free(pattern);
 
-    fprintf(stdout, "按任意键退出\n");
+    fprintf(stdout, "press any key exit\n");
     fflush(stdout);
     getchar();//等待终端输入任意字符
 
