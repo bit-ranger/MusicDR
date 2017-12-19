@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <windows.h>
-#include "HashMap.h"
+#include <HashMap.h>
+#include <conio.h>
 
 extern int errno;
 
 
 /**
- * hashº¯Êı
+ * hashå‡½æ•°
  * @param keyVoid
  * @return
  */
@@ -35,26 +36,27 @@ static bool equal(void *key1Void, void *key2Void) {
 int cut(char *str, char *cut, char * newStr){
     char * add = strstr(str, cut);
     if(add == NULL){
+        strcpy(newStr, str);
         return 0;
     } else {
         unsigned long i = add - str;
         strncpy(newStr, str, i);
-        *(newStr + i) = '\0';
+        strcat(newStr, "\0");
         return 0;
     }
 }
 
 
-void find(char dir[]) {
+void find(char *dir, char *pattern) {
 
-    /*ËÑË÷Â·¾¶*/
-    char LookUpPath[MAX_PATH];
+    /*æœç´¢è·¯å¾„*/
+    char *LookUpPath = calloc(MAX_PATH, sizeof(char));
     strcpy(LookUpPath, dir);
     strcat(LookUpPath, "/*");
 
-    /*ÕÒµ½µÄÎÄ¼ş*/
-    WIN32_FIND_DATA FindData;
-    WIN32_FIND_DATA * pFindData = &FindData;
+    /*æ‰¾åˆ°çš„æ–‡ä»¶*/
+    WIN32_FIND_DATA findData;
+    WIN32_FIND_DATA * pFindData = &findData;
 
     HANDLE hFind= FindFirstFile(LookUpPath, pFindData);
 
@@ -64,13 +66,13 @@ void find(char dir[]) {
         HashMap  hashMap = CreateHashMap(64, &hash, &equal);
 
         while(TRUE) {
-            if(FindData.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY)
+            if(findData.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY)
             {
-//                if(FindData.cFileName[0] != '.')
+//                if(findData.cFileName[0] != '.')
 //                {
 //                    strcpy(szFile,dir);
 //                    strcat(szFile,"");
-//                    strcat(szFile,FindData.cFileName);
+//                    strcat(szFile,findData.cFileName);
 //                    find(szFile);
 //                }
             }
@@ -78,25 +80,26 @@ void find(char dir[]) {
             {
 
                 //start with .
-                if(FindData.cFileName[0] == '.'){
-                    if(!FindNextFile(hFind,&FindData)){
+                if(findData.cFileName[0] == '.'){
+                    if(!FindNextFile(hFind,&findData)){
                         break;
                     }
                 }
 
-				//»ñÈ¡ºËĞÄÃû³Æ
-                char KeyFileName0[MAX_PATH];
-                cut(FindData.cFileName, ".", KeyFileName0);
-                char KeyFileName[MAX_PATH];
-                cut(KeyFileName0, "(", KeyFileName);
+				//è·å–æ ¸å¿ƒåç§°
+                char *KeyFileName0 = calloc(MAX_PATH, sizeof(char));
+                cut(findData.cFileName, ".", KeyFileName0);
+                char *KeyFileName = calloc(MAX_PATH, sizeof(char));
+                cut(KeyFileName0, pattern, KeyFileName);
+                free(KeyFileName0);
 
                 WIN32_FIND_DATA *value = GetHashMap(hashMap, KeyFileName);
 
                 if(value == NULL){
-					//¸´ÖÆµ½ĞÂµÄ½á¹¹Ìå£¬·Å½ømap
+					//å¤åˆ¶åˆ°æ–°çš„ç»“æ„ä½“ï¼Œæ”¾è¿›map
                     WIN32_FIND_DATA *currentFindFileData = calloc(1, sizeof(WIN32_FIND_DATA));
-                    currentFindFileData->nFileSizeLow = FindData.nFileSizeLow;
-                    strcpy(currentFindFileData->cFileName, FindData.cFileName);
+                    currentFindFileData->nFileSizeLow = findData.nFileSizeLow;
+                    strcpy(currentFindFileData->cFileName, findData.cFileName);
                     PutHashMap(hashMap, KeyFileName, currentFindFileData);
 
                     fprintf(stdout, "find %s,%u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
@@ -104,26 +107,27 @@ void find(char dir[]) {
 
                     WIN32_FIND_DATA more;
                     WIN32_FIND_DATA less;
-                    //É¾³ıĞ¡µÄ
-                    if((*value).nFileSizeLow > FindData.nFileSizeLow){
+                    //åˆ é™¤å°çš„
+                    if((*value).nFileSizeLow > findData.nFileSizeLow){
                         more = *value;
-                        less = FindData;
+                        less = findData;
                     } else {
                         less = *value;
-                        more = FindData;
+                        more = findData;
                     }
 
                     fprintf(stdout, "compare %s,%u greater than %s,%u\n", more.cFileName, more.nFileSizeLow, less.cFileName, less.nFileSizeLow);
 
-                    char name2Delete[MAX_PATH];
+                    char *name2Delete = calloc(MAX_PATH, sizeof(char));
                     strcpy(name2Delete, dir);
                     strcat(name2Delete, "/");
                     strcat(name2Delete, less.cFileName);
                     DeleteFile(name2Delete);
 
                     fprintf(stdout, "delete %s,%u\n", less.cFileName, less.nFileSizeLow);
+                    free(name2Delete);
 
-					//´óµÄ¸´ÖÆµ½ĞÂµÄ½á¹¹Ìå£¬·Å½ømap
+					//å¤§çš„å¤åˆ¶åˆ°æ–°çš„ç»“æ„ä½“ï¼Œæ”¾è¿›map
                     WIN32_FIND_DATA *currentFindFileData = calloc(1, sizeof(WIN32_FIND_DATA));
                     currentFindFileData->nFileSizeLow = more.nFileSizeLow;
                     strcpy(currentFindFileData->cFileName, more.cFileName);
@@ -131,7 +135,6 @@ void find(char dir[]) {
 
                     fprintf(stdout, "keep %s,%u\n", currentFindFileData->cFileName, currentFindFileData->nFileSizeLow);
 
-                    //free(name2Delete);
                     free(value);
                 }
 
@@ -139,12 +142,12 @@ void find(char dir[]) {
             }
 
            
-            if(!FindNextFile(hFind,&FindData)){
+            if(!FindNextFile(hFind,&findData)){
                 break;
             }
         }
 		                    
-		//ÖØÃüÃû
+		//é‡å‘½å
 
 		unsigned int size = SizeHashMap(hashMap);
         KvPairHashMap *p = PairListHashMap(hashMap);
@@ -166,57 +169,86 @@ void find(char dir[]) {
 
             //fprintf(stdout, "rename suffix %s\n", suffix);
 
-			char renameb[MAX_PATH];
-			strcpy(renameb, dir);
-			strcat(renameb, "/");
-			strcat(renameb, more.cFileName);
+			char *renameFr = calloc(MAX_PATH, sizeof(char));
+			strcpy(renameFr, dir);
+			strcat(renameFr, "/");
+			strcat(renameFr, more.cFileName);
 
-            fprintf(stdout, "rename from %s\n", renameb);
+            fprintf(stdout, "rename from %s\n", renameFr);
 
-            //»ñÈ¡ºËĞÄÃû³Æ
-            char KeyFileName0[MAX_PATH];
-            cut(FindData.cFileName, ".", KeyFileName0);
-            char KeyFileName[MAX_PATH];
-            cut(KeyFileName0, "(", KeyFileName);
+            //è·å–æ ¸å¿ƒåç§°
+            char *KeyFileName0 = calloc(MAX_PATH, sizeof(char));;
+            cut(more.cFileName, ".", KeyFileName0);
+            char *KeyFileName = calloc(MAX_PATH, sizeof(char));;
+            cut(KeyFileName0, pattern, KeyFileName);
+            free(KeyFileName0);
 
+			char *renameTo = calloc(MAX_PATH, sizeof(char));
+            strcpy(renameTo, dir);
+			strcat(renameTo, "/");
+			strcat(renameTo, KeyFileName);
 
-			char rename2[MAX_PATH];
-
-            strcpy(rename2, dir);
-			strcat(rename2, "/");
-			strcat(rename2, KeyFileName);
             if(suffixLen > 0){
-                strcat(rename2, suffix);
+                strcat(renameTo, suffix);
             }
 
-            fprintf(stdout, "rename to %s\n", rename2);
+            fprintf(stdout, "rename to   %s\n", renameTo);
 
-            if(equal(renameb, rename2)){
-                fprintf(stdout, "rename ignore %s\n", renameb);
-                continue;
+            if(equal(renameFr, renameTo)){
+                fprintf(stdout, "rename ignore\n");
+            } else {
+                char fr[MAX_PATH];
+                char to[MAX_PATH];
+                strcpy(fr, renameFr);
+                strcpy(to, renameTo);
+                MoveFile(fr, to);
+                fprintf(stdout, "rename success\n");
             }
 
-			MoveFile(renameb, rename2);
-
-			fprintf(stdout, "rename success %s\n", rename2);
+            free(renameFr);
+            free(renameTo);
+            free(p->key);
+            free(p->value);
             free(moreP);
 		}
         fflush(stdout);
-			
-
-        free(p);
         DestroyHashMap(hashMap);
         FindClose(hFind);
     }
 
+    free(LookUpPath);
 
 }
-void main()
+
+
+int main()
 {
-    fprintf(stdout, "ÇëÊäÈëÒôÀÖÄ¿Â¼\n");
+    fprintf(stdout, "è¯·è¾“å…¥éŸ³ä¹ç›®å½•\n");
     fflush(stdout);
-    char filepath[MAX_PATH];
-    scanf("%s", filepath);
-    find(filepath);
-    system("PAUSE");
+    char *filepath = calloc(MAX_PATH, sizeof(char));
+    fgets(filepath, MAX_PATH, stdin);
+
+    fprintf(stdout, "è¯·è¾“å…¥éŸ³ä¹åä¸é‡å¤çš„éƒ¨åˆ†å¼€å¤´\n");
+    fflush(stdout);
+    char *pattern = calloc(MAX_PATH, sizeof(char));
+    fgets(pattern, MAX_PATH, stdin);
+
+    if ((strlen(filepath) > 0) && (filepath[strlen (filepath) - 1] == '\n')){
+        filepath[strlen (filepath) - 1] = '\0';
+    }
+
+    if ((strlen(pattern) > 0) && (pattern[strlen (pattern) - 1] == '\n')){
+        pattern[strlen (pattern) - 1] = '\0';
+    }
+
+    find(filepath, pattern);
+
+    free(filepath);
+    free(pattern);
+
+    fprintf(stdout, "æŒ‰ä»»æ„é”®é€€å‡º\n");
+    fflush(stdout);
+    getch();//ç­‰å¾…ç»ˆç«¯è¾“å…¥ä»»æ„å­—ç¬¦
+
+    return 0;//é€€å‡ºç¨‹åºã€‚
 }
