@@ -35,6 +35,8 @@ static bool equal(void *key1Void, void *key2Void) {
 int cut(char *str, char *cut, char * newStr){
     char * add = strstr(str, cut);
     if(add == NULL){
+        strcpy(newStr, str);
+        strcat(newStr, '\0');
         return 0;
     } else {
         unsigned long i = add - str;
